@@ -1,6 +1,7 @@
 const ANIMATE = "animate";
 const SPACING = "spacing";
 const CREATE_CURVE = "create-curve";
+const CREATE_RECT = "create-rect";
 
 const state = {
   curves: [],
@@ -23,6 +24,9 @@ document.addEventListener("click", (event) => {
       break;
     case SPACING:
       spacing();
+      break;
+    case CREATE_RECT:
+      createRect();
       break;
   }
 });
@@ -59,7 +63,13 @@ function movePoint(x, y) {
   const curve = state.curves[state.index];
   curve[state.pointIndex] = x;
   curve[state.pointIndex + 1] = y;
-  drawCurve(...curve);
+
+  const canvas = document.getElementById("app");
+  const context = canvas.getContext("2d");
+  context.clearRect(0, 0, 1200, 600);
+  for (const c of state.curves) {
+    drawCurve(...c);
+  }
 }
 
 function unfocusPoint() {
@@ -80,8 +90,8 @@ function pointCollision(x, y) {
     } else if (Math.abs(curve[6] - x) < 5 && Math.abs(curve[7] - y) < 5) {
       return [i, 6];
     }
-    return [-1, -1];
   }
+  return [-1, -1];
 }
 
 function drawLetter() {
@@ -91,8 +101,8 @@ function drawLetter() {
   const metrics = context.measureText("H");
   console.log(metrics);
 
-  const x = 600;
-  const y = 200;
+  const x = 480;
+  const y = 160;
   context.rect(
     x + metrics.width,
     y - metrics.fontBoundingBoxAscent,
@@ -109,13 +119,17 @@ function createCurve() {
   state.current = state.index;
   state.curves[state.index] = curve;
 
-  drawCurve(...curve);
+  const canvas = document.getElementById("app");
+  const context = canvas.getContext("2d");
+  context.clearRect(0, 0, 1200, 600);
+  for (const curve of state.curves) {
+    drawCurve(...curve);
+  }
 }
 
 function drawCurve(x0, y0, cx0, cy0, cx1, cy1, x1, y1) {
   const canvas = document.getElementById("app");
   const context = canvas.getContext("2d");
-  context.clearRect(0, 0, 1200, 600);
 
   context.beginPath();
   context.moveTo(x0, y0);
@@ -135,6 +149,27 @@ function drawCurve(x0, y0, cx0, cy0, cx1, cy1, x1, y1) {
   context.fill();
 }
 
+function createRect() {
+  const rect = [10, 20, 150, 100];
+
+}
+
+function drawRect(x, y, w, h) {
+  const canvas = document.getElementById("app");
+  const context = canvas.getContext("2d");
+  context.strokeStyle = "blue";
+  context.beginPath();
+  context.roundRect(10, 20, 150, 100, [10, 40]);
+  context.stroke();
+
+  context.strokeStyle = "red";
+  context.fillStyle = "red";
+  context.beginPath();
+  context.arc(10, 20, 5, 0, 2 * Math.PI);
+  context.arc(10 + 150, 20 + 100, 5, 0, 2 * Math.PI);
+  context.fill();
+}
+
 function spacing() {
   if (state.spacing < 100) {
     state.spacing = state.spacing * 2;
@@ -149,16 +184,19 @@ function animate() {
   const context = canvas.getContext("2d");
   context.clearRect(0, 0, 1200, 600);
 
-  const curve = state.curves[state.index];
-  const points = animateCurve(...curve);
-  for (let i = 0; i < state.steps; i++) {
-    const [_x, _y, x, y] = points.slice(2 * i, 2 * i + 4);
-    setTimeout(() => {
-      context.beginPath();
-      context.moveTo(_x, _y);
-      context.lineTo(x, y);
-      context.stroke();
-    }, i * state.delay);
+  let delay = 0;
+  for (const curve of state.curves) {
+    delay++;
+    const points = animateCurve(...curve);
+    for (let i = 0; i < state.steps; i++) {
+      const [_x, _y, x, y] = points.slice(2 * i, 2 * i + 4);
+      setTimeout(() => {
+        context.beginPath();
+        context.moveTo(_x, _y);
+        context.lineTo(x, y);
+        context.stroke();
+      }, i * state.delay + 100 * delay);
+    }
   }
 }
 
